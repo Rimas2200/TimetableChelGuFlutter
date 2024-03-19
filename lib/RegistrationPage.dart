@@ -1,80 +1,59 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-class RegistrationPage extends StatelessWidget {
-  // ignore: use_key_in_widget_constructors
-  const RegistrationPage();
+class RegistrationPage extends StatefulWidget {
+  @override
+  _RegistrationPageState createState() => _RegistrationPageState();
+}
+
+class _RegistrationPageState extends State<RegistrationPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _registerUser() async {
+    const url = 'http://127.0.0.1:3000/register';
+
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+
+    final response = await http.post(
+      Uri.parse(url),
+      body: {
+        'name': username,
+        'password': password,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('User registered successfully!');
+    } else {
+      print('Error occurred during registration');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Регистрация',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
+        title: Text('Registration Page'),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 17),
+        padding: EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Имя',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  fillColor: const Color.fromRGBO(232, 232, 232, 100),
-                  filled: true,
-                ),
-                style: const TextStyle(fontSize: 18),
-              ),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(labelText: 'Name'),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  fillColor: const Color.fromRGBO(232, 232, 232, 100),
-                  filled: true,
-                ),
-                style: const TextStyle(fontSize: 18),
-              ),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: TextFormField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Пароль',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  fillColor: const Color.fromRGBO(232, 232, 232, 100),
-                  filled: true,
-                ),
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('Регистрация', style: TextStyle(fontSize: 18)),
-              ),
+            SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: _registerUser,
+              child: Text('Register'),
             ),
           ],
         ),

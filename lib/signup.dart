@@ -60,7 +60,7 @@ Future<void> writeToDatabase(String name, String email, String password) async {
   final settings = ConnectionSettings(
     host: '127.0.0.1',
     port: 3306,
-    user: '',
+    user: 'root',
     password: '',
     db: 'timetable',
   );
