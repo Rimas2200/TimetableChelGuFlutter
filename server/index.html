@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .maze-container {
+            position: relative;
+        }
+
+        .maze {
+            display: grid;
+            grid-template-columns: repeat(50, 20px);
+            gap: 2px;
+            position: absolute;
+        }
+
+        .wall, .path {
+            width: 20px;
+            height: 20px;
+        }
+
+        .wall {
+            background-color: #000000; /* Цвет стены */
+        }
+
+        .path {
+            background-color: #fff; /* Цвет прохода */
+        }
+
+        .pacman, .ghost {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .pacman {
+            background-color:#808080 ; /* Цвет пакмена */
+        }
+
+        .ghost {
+            background-color: red; /* Цвет приведений */
+        }
+
+        .point {
+            width: 10px;
+            height: 10px;
+            background-color:#C0C0C0  ; /* Цвет шарика */
+            border-radius: 50%;
+            position: absolute;
+        }
+    </style>
+</head>
+<body tabindex="0">
+    <div class="maze-container">
+        <div class="maze" id="maze"></div>
+        <div class="pacman" id="pacman"></div>
+        <div class="ghost" id="ghost1"></div>
+        <div class="ghost" id="ghost2"></div>
+        <div id="points"></div>
+    </div>
+
+    <script>
+        const mazeMatrix = generateRandomMaze(50, 50);
+        const mazeElement = document.getElementById('maze');
+        const pacmanElement = document.getElementById('pacman');
+        const ghosts = [document.getElementById('ghost1'), document.getElementById('ghost2')];
+        const pointsElement = document.getElementById('points');
+        let pacmanPosition = { x: 0, y: 0 };
+
+        function generateRandomMaze(rows, columns) {
+            const maze = [];
+            for (let i = 0; i < rows; i++) {
+                const row = [];
+                for (let j = 0; j < columns; j++) {
+                    // Создаем лабиринт, где 1 - проход, 0 - стена
+                    row.push(Math.random() > 0.2 ? 1 : 0);
+                }
+                maze.push(row);
+            }
+            maze[0][0] = 1; // Убедимся, что начальная позиция доступна
+            maze[rows - 1][columns - 1] = 1; // Убедимся, что конечная позиция доступна
+            return maze;
+        }
+
+        function generateMaze() {
+            mazeElement.innerHTML = '';
+            pointsElement.innerHTML = '';
+
+            for (let i = 0; i < mazeMatrix.length; i++) {
+                for (let j = 0; j < mazeMatrix[i].length; j++) {
+                    const cell = document.createElement('div');
+                    if (mazeMatrix[i][j] === 1) {
+                        cell.classList.add('path');
+                        if (mazeMatrix[i][j] === 1) {
+                            const point = document.createElement('div');
+                            point.classList.add('point');
+                            point.style.left = j * 22 + 'px';
+                            point.style.top = i * 22 + 'px';
+                            pointsElement.appendChild(point);
+                        }
+                    } else if (mazeMatrix[i][j] === 0) {
+                        cell.classList.add('wall');
+                    }
+                    mazeElement.appendChild(cell);
+                }
+            }
+
+            pacmanElement.style.left = pacmanPosition.x * 22 + 'px';
+            pacmanElement.style.top = pacmanPosition.y * 22 + 'px';
+
+            // Расположение приведений
+            ghosts.forEach(ghost => {
+                ghost.style.left = Math.floor(Math.random() * mazeMatrix[0].length) * 22 + 'px';
+                ghost.style.top = Math.floor(Math.random() * mazeMatrix.length) * 22 + 'px';
+            });
+        }
+
+        function moveEntity(entity, event) {
+            event.preventDefault();
+
+            switch (event.key) {
+                case 'ArrowUp':
+                    if (entity.position.y > 0 && mazeMatrix[entity.position.y - 1][entity.position.x] !== 0) {
+                        entity.position.y--;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (entity.position.y < mazeMatrix.length - 1 && mazeMatrix[entity.position.y + 1][entity.position.x] !== 0) {
+                        entity.position.y++;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (entity.position.x > 0 && mazeMatrix[entity.position.y][entity.position.x - 1] !== 0) {
+                        entity.position.x--;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (entity.position.x < mazeMatrix[0].length - 1 && mazeMatrix[entity.position.y][entity.position.x + 1] !== 0) {
+                        entity.position.x++;
+                    }
+                    break;
+            }
+
+            entity.element.style.left = entity.position.x * 22 + 'px';
+            entity.element.style.top = entity.position.y * 22 + 'px';
+        }
+
+        function movePacman(event) {
+            moveEntity({ position: pacmanPosition, element: pacmanElement }, event);
+        }
+
+        function moveGhost(ghostElement) {
+            const ghostPosition = {
+                x: parseInt(ghostElement.style.left) / 22,
+                y: parseInt(ghostElement.style.top) / 22
+            };
+            moveEntity({ position: ghostPosition, element: ghostElement }, {
+                key: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'][Math.floor(Math.random() * 4)],
+                preventDefault: function() {}
+            });
+        }
+
+        function checkPoints() {
+            const pacmanCell = mazeMatrix[pacmanPosition.y][pacmanPosition.x];
+            if (pacmanCell === 1) {
+                mazeMatrix[pacmanPosition.y][pacmanPosition.x] = 2;
+            }
+        }
+		
+			function movePacman(event) {
+    const nextPosition = { ...pacmanPosition };
+
+    switch (event.key) {
+        case 'ArrowUp':
+            nextPosition.y--;
+            break;
+        case 'ArrowDown':
+            nextPosition.y++;
+            break;
+        case 'ArrowLeft':
+            nextPosition.x--;
+            break;
+        case 'ArrowRight':
+            nextPosition.x++;
+            break;
+    }
+
+    // Проверка на столкновение с привидениями
+    const collidedGhost = ghosts.find(ghost => {
+        const ghostPosition = {
+            x: parseInt(ghost.style.left) / 22,
+            y: parseInt(ghost.style.top) / 22
+        };
+        return ghostPosition.x === nextPosition.x && ghostPosition.y === nextPosition.y;
+    });
+
+    if (collidedGhost) {
+        // Если пакмен столкнулся с привидением, то выполняем действия по его смерти
+        alert('Погиб ваш пакмен');
+        // Можно добавить дополнительные действия, например, перезагрузку игры или что-то еще
+        return; // Прекращаем выполнение функции, чтобы пакмен не переместился на клетку привидения
+    }
+
+    // Проверяем, что следующая позиция в пределах лабиринта и не стена
+    if (
+        nextPosition.x >= 0 && nextPosition.x < mazeMatrix[0].length &&
+        nextPosition.y >= 0 && nextPosition.y < mazeMatrix.length &&
+        mazeMatrix[nextPosition.y][nextPosition.x] !== 0
+    ) {
+        pacmanPosition = nextPosition;
+
+        // Проверка на наличие красного круга в следующей позиции
+        const nextCell = mazeMatrix[nextPosition.y][nextPosition.x];
+        if (nextCell === 1) {
+            // Если в следующей позиции есть красный круг, убираем его
+            mazeMatrix[nextPosition.y][nextPosition.x] = 2; // Заменяем красный круг на пустое место
+            const pointElement = pointsElement.querySelector(`.point[style="left: ${nextPosition.x * 22}px; top: ${nextPosition.y * 22}px;"]`);
+            if (pointElement) {
+                pointsElement.removeChild(pointElement); // Убираем красный круг из DOM
+            }
+        }
+    }
+
+    pacmanElement.style.left = pacmanPosition.x * 22 + 'px';
+    pacmanElement.style.top = pacmanPosition.y * 22 + 'px';
+}
+		
+
+        window.onload = () => {
+            generateMaze();
+            document.addEventListener('keydown', movePacman);
+            // Двигаем приведений
+            setInterval(() => {
+                ghosts.forEach(moveGhost);
+            }, 1000); // Обновление позиций каждую секунду (можно изменить интервал)
+        };
+		
+		
+
+    </script>
+</body>
+</html>

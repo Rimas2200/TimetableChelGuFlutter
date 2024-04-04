@@ -9,14 +9,29 @@ const pool = mysql.createPool({
   password: '',
 });
 
+app.use(express.json());
+
+// Обработчики GET-запросов
+app.get('/', (req, res) => {
+  res.send('Добро пожаловать на сервер!');
+});
+app.get('/register', (req, res) => {
+  res.send('Регистрация нового пользователя');
+});
+app.get('/auth', (req, res) => {
+  res.send('Авторизация нового пользователя');
+});
+
 // Обработчик POST-запроса на /register
 app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
-  if (!username || !email || !password) {
-    return res.status(416).json({ error: 'Данные не соответствуют запросу' });
+  console.log(req.body)
+  if (!(username && email && password)) {
+    return res.status(409).json({ error: 'Данные не соответствуют запросу' });
   }
+  console.log(username)
   if (userExists(username)) {
-    return res.status(409).json({ error: 'Имя пользователя уже существует' });
+    return res.status(416).json({ error: 'Имя пользователя уже существует' });
   }
   const newUser = {
     username,
