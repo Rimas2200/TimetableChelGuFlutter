@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-
-class RegistrationTab extends StatefulWidget {
+class RegistrationPage extends StatefulWidget {
   @override
-  _RegistrationTabState createState() => _RegistrationTabState();
+  _RegistrationPageState createState() => _RegistrationPageState();
 }
 
-class _RegistrationTabState extends State<RegistrationTab> {
+class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> registerUser() async {
-    final url = 'http://*:3000/register/';
+    final url = 'http://localhost:3000/register';
     final response = await http.post(
       Uri.parse(url),
-      body: {
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'username': _usernameController.text,
         'email': _emailController.text,
         'password': _passwordController.text,
-      },
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -41,6 +42,7 @@ class _RegistrationTabState extends State<RegistrationTab> {
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
               controller: _usernameController,
@@ -48,18 +50,20 @@ class _RegistrationTabState extends State<RegistrationTab> {
                 labelText: 'Имя пользователя',
               ),
             ),
+            SizedBox(height: 16.0),
             TextField(
               controller: _emailController,
               decoration: InputDecoration(
                 labelText: 'Email',
               ),
             ),
+            SizedBox(height: 16.0),
             TextField(
               controller: _passwordController,
-              obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Пароль',
               ),
+              obscureText: true,
             ),
             SizedBox(height: 16.0),
             ElevatedButton(

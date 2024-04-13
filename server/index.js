@@ -1,5 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2');
+const cors = require('cors');
 
 const app = express();
 const pool = mysql.createPool({
@@ -10,6 +11,7 @@ const pool = mysql.createPool({
 });
 
 app.use(express.json());
+app.use(cors()); 
 
 // Обработчики GET-запросов
 app.get('/', (req, res) => {
@@ -26,7 +28,7 @@ app.get('/auth', (req, res) => {
 app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
   console.log(req.body)
-  if (!(username && email && password)) {
+  if (!(username || email || password)) {
     return res.status(409).json({ error: 'Данные не соответствуют запросу' });
   }
   console.log(username)
@@ -38,6 +40,7 @@ app.post('/register', (req, res) => {
     email,
     password,
   };
+  
   saveUser(newUser)
     .then(() => {
       res.status(200).json(newUser);
@@ -47,7 +50,13 @@ app.post('/register', (req, res) => {
       res.status(500).json({ error: 'Ошибка сервера' });
     });
 });
-
+function userExists(username) {
+  // Здесь должна быть логика проверки наличия пользователя в базе данных
+  // Верните true, если пользователь существует, и false в противном случае
+  // Ниже приведен пример проверки наличия пользователя в простом массиве
+  const users = ['user1', 'user2', 'user3'];
+  return users.includes(username);
+}
 //сохранение пользователя в бд
 function saveUser(user) {
   return new Promise((resolve, reject) => {
