@@ -1,33 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class RegistrationPage extends StatefulWidget {
+
+class RegistrationTab extends StatefulWidget {
   @override
-  _RegistrationPageState createState() => _RegistrationPageState();
+  _RegistrationTabState createState() => _RegistrationTabState();
 }
 
-class _RegistrationPageState extends State<RegistrationPage> {
+class _RegistrationTabState extends State<RegistrationTab> {
   final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  Future<void> _registerUser() async {
-    const url = 'http://127.0.0.1:3000/register';
-
-    final username = _usernameController.text;
-    final password = _passwordController.text;
-
+  Future<void> registerUser() async {
+    final url = 'http://*:3000/register/';
     final response = await http.post(
       Uri.parse(url),
       body: {
-        'name': username,
-        'password': password,
+        'username': _usernameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
       },
     );
 
     if (response.statusCode == 200) {
-      print('User registered successfully!');
+      // Пользователь успешно зарегистрирован
+      print('Пользователь успешно зарегистрирован');
     } else {
-      print('Error occurred during registration');
+      // Обработка ошибки регистрации
+      print('Ошибка регистрации: ${response.body}');
     }
   }
 
@@ -35,7 +36,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Registration Page'),
+        title: Text('Регистрация'),
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -43,17 +44,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
           children: [
             TextField(
               controller: _usernameController,
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: InputDecoration(
+                labelText: 'Имя пользователя',
+              ),
+            ),
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+              ),
             ),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Пароль',
+              ),
             ),
             SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: _registerUser,
-              child: Text('Register'),
+              onPressed: registerUser,
+              child: Text('Зарегистрироваться'),
             ),
           ],
         ),
