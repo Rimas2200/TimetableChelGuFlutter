@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       home: const MyHomePage(),
 
       routes: {
-        '/registration': (context) => RegistrationTab(),
+        '/registration': (context) => SignUpPage(),
       },
     );
   }

@@ -13,50 +13,58 @@ const pool = mysql.createPool({
 app.use(express.json());
 app.use(cors()); 
 
-// Обработчики GET-запросов
 app.get('/', (req, res) => {
   res.send('Добро пожаловать на сервер!');
 });
-app.get('/register', (req, res) => {
-  res.send('Регистрация нового пользователя');
-});
-app.get('/auth', (req, res) => {
-  res.send('Авторизация нового пользователя');
-});
 
 // Обработчик POST-запроса на /register
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   console.log(req.body)
-  if (!(username || email || password)) {
+  if (!(username && email && password)) {
     return res.status(409).json({ error: 'Данные не соответствуют запросу' });
   }
   console.log(username)
-  if (userExists(username)) {
-    return res.status(416).json({ error: 'Имя пользователя уже существует' });
+  try {
+    const exists = await userExists(username);
+    if (exists) {
+      return res.status(416).json({ error: 'Имя пользователя уже существует' });
+    }
+    const newUser = {
+      username,
+      email,
+      password,
+    };
+
+    await saveUser(newUser);
+    res.status(200).json(newUser);
+  } catch (error) {
+    console.error('Ошибка сохранения пользователя:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
   }
-  const newUser = {
-    username,
-    email,
-    password,
-  };
-  
-  saveUser(newUser)
-    .then(() => {
-      res.status(200).json(newUser);
-    })
-    .catch((error) => {
-      console.error('Ошибка сохранения пользователя:', error);
-      res.status(500).json({ error: 'Ошибка сервера' });
-    });
 });
 function userExists(username) {
-  // Здесь должна быть логика проверки наличия пользователя в базе данных
-  // Верните true, если пользователь существует, и false в противном случае
-  // Ниже приведен пример проверки наличия пользователя в простом массиве
-  const users = ['user1', 'user2', 'user3'];
-  return users.includes(username);
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT COUNT(*) AS count FROM users WHERE username = ?';
+    const values = [username];
+
+    pool.query(query, values, (error, results) => {
+      if (error) {
+        reject(error);
+      } else {
+        const count = results[0].count;
+        resolve(count > 0);
+        console.log(count)
+      }
+    });
+  });
 }
+// userExists('username').then((exists) => {
+//   console.log(exists); // Результат запроса (true или false)
+// }).catch((error) => {
+//   console.error(error); // Обработка ошибки, если запрос завершился неудачей
+// });
+
 //сохранение пользователя в бд
 function saveUser(user) {
   return new Promise((resolve, reject) => {
