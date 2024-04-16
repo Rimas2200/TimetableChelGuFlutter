@@ -1,6 +1,8 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const app = express();
 const pool = mysql.createPool({
@@ -90,7 +92,11 @@ app.post('/auth', (req, res) => {
   authenticateUser(email, password)
     .then((authenticated) => {
       if (authenticated) {
-        res.status(200).json({ message: 'Пользователь успешно авторизован' });
+        const secretKey = crypto.randomBytes(32).toString('hex');
+        // Генерация токена
+        const token = jwt.sign({ email }, secretKey);
+        // Отправка токена в ответе
+        res.status(200).json({ token });
       } else {
         res.status(401).json({ error: 'Не авторизован' });
       }
@@ -106,7 +112,7 @@ function authenticateUser(email, password) {
   return new Promise((resolve, reject) => {
     const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
     const values = [email, password];
-
+    // console.log(username, password)
     pool.query(query, values, (error, results) => {
       if (error) {
         reject(error);

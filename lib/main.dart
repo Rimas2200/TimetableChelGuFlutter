@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timetable_chel_gu/RegistrationPage.dart';
 import 'package:timetable_chel_gu/signup.dart';
+import 'package:timetable_chel_gu/loginPage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
       home: const MyHomePage(),
 
       routes: {
-        '/registration': (context) => SignUpPage(),
+        '/registration': (context) => LoginPage(),
       },
     );
   }

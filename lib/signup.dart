@@ -100,7 +100,7 @@ class _SignUpPageState extends State<SignUpPage> {
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
               ),
-              labelText: 'Имя',
+              labelText: 'Логин',
               labelStyle: TextStyle(color: Colors.white),
             ),
           ),
