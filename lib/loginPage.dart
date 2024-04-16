@@ -141,12 +141,8 @@ _getBottomRow() {
 
   void _login() async {
     final String url = 'http://localhost:3000/auth';
-
-    // Получите значения из полей ввода
     String email = _emailController.text;
     String password = _passwordController.text;
-
-    // Проверьте, что поля ввода не пустые
     if (email.isEmpty || password.isEmpty) {
       print('Ошибка авторизации: Данные не соответствуют запросу');
       return;
@@ -171,7 +167,7 @@ _getBottomRow() {
         Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => ScheduleTab(), // Замените NextScreen на свой собственный виджет следующего экрана
+      builder: (context) => ScheduleTab(),
     ),
   );
       } else if (response.statusCode == 401) {
