@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:timetable_chel_gu/signup.dart';
 import 'package:timetable_chel_gu/ScheduleTab.dart';
+import 'package:timetable_chel_gu/CustomTabBar.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -167,7 +168,7 @@ _getBottomRow() {
         Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => ScheduleTab(),
+      builder: (context) => CustomTabBar(),
     ),
   );
       } else if (response.statusCode == 401) {

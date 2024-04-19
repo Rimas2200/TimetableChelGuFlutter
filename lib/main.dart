@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:timetable_chel_gu/RegistrationPage.dart';
-import 'package:timetable_chel_gu/signup.dart';
+// import 'package:timetable_chel_gu/RegistrationPage.dart';
+// import 'package:timetable_chel_gu/signup.dart';
 import 'package:timetable_chel_gu/loginPage.dart';
+// import 'package:timetable_chel_gu/ScheduleTab.dart';
+import 'package:timetable_chel_gu/CustomTabBar.dart';
 
 void main() {
   runApp(const MyApp());

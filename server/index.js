@@ -107,7 +107,7 @@ app.post('/auth', (req, res) => {
     });
 });
 
-// Функция проверки авторизации пользователя в бд
+// Функция проверки авторизации пользователя в бд 
 function authenticateUser(email, password) {
   return new Promise((resolve, reject) => {
     const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
