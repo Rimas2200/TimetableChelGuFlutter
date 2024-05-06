@@ -8,7 +8,7 @@ const app = express();
 const pool = mysql.createPool({
   host: '127.0.0.1',
   user: 'root',
-  database: 'timetable',
+  database: 'respGlobalChange',
   password: '',
 });
 
@@ -19,6 +19,27 @@ app.get('/', (req, res) => {
   res.send('Добро пожаловать на сервер!');
 });
 
+app.get('/faculties', (req, res) => {
+  // Запрос на получение списка факультетов из базы данных
+  pool.query('SELECT * FROM faculty', (error, results) => {
+    if (error) {
+      // Если произошла ошибка при выполнении запроса
+      console.error('Ошибка при выполнении запроса:', error);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    } else {
+      // Если запрос выполнен успешно, проверяем, есть ли результаты
+      if (results && results.length > 0) {
+        // Если есть результаты, отправляем список факультетов на клиент
+        res.json(results);
+      } else {
+        // Если результаты отсутствуют, отправляем пустой список
+        res.json(["обит 50/50"]);
+      }
+    }
+  });
+});
+
+
 // Обработчик POST-запроса на /register
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
@@ -26,11 +47,11 @@ app.post('/register', async (req, res) => {
   if (!(username && email && password)) {
     return res.status(409).json({ error: 'Данные не соответствуют запросу' });
   }
-  console.log(username)
+  console.log(email)
   try {
-    const exists = await userExists(username);
+    const exists = await userExists(email);
     if (exists) {
-      return res.status(416).json({ error: 'Имя пользователя уже существует' });
+      return res.status(416).json({ error: 'Пользователь с такой почтой уже существует' });
     }
     const newUser = {
       username,
@@ -45,10 +66,11 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
-function userExists(username) {
+
+function userExists(email) {
   return new Promise((resolve, reject) => {
-    const query = 'SELECT COUNT(*) AS count FROM users WHERE username = ?';
-    const values = [username];
+    const query = 'SELECT COUNT(*) AS count FROM users WHERE email = ?';
+    const values = [email];
 
     pool.query(query, values, (error, results) => {
       if (error) {
@@ -70,8 +92,8 @@ function userExists(username) {
 //сохранение пользователя в бд
 function saveUser(user) {
   return new Promise((resolve, reject) => {
-    const query = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
-    const values = [user.username, user.email, user.password];
+    const query = 'INSERT INTO users (username, email, password, token) VALUES (?, ?, ?, ?)';
+    const values = [user.username, user.email, user.password, "token"];
 
     pool.query(query, values, (error, results) => {
       if (error) {
@@ -89,12 +111,14 @@ app.post('/auth', (req, res) => {
   if (!email || !password) {
     return res.status(416).json({ error: 'Данные не соответствуют запросу' });
   }
-  authenticateUser(email, password)
+  
+  const secretKey = crypto.randomBytes(32).toString('hex');
+  // Генерация токена
+  const token = jwt.sign({ email }, secretKey);
+  
+  authenticateUser(email, password, token)
     .then((authenticated) => {
       if (authenticated) {
-        const secretKey = crypto.randomBytes(32).toString('hex');
-        // Генерация токена
-        const token = jwt.sign({ email }, secretKey);
         // Отправка токена в ответе
         res.status(200).json({ token });
       } else {
@@ -107,8 +131,8 @@ app.post('/auth', (req, res) => {
     });
 });
 
-// Функция проверки авторизации пользователя в бд 
-function authenticateUser(email, password) {
+// Функция проверки авторизации пользователя в бд
+function authenticateUser(email, password, token) {
   return new Promise((resolve, reject) => {
     const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
     const values = [email, password];
@@ -118,7 +142,19 @@ function authenticateUser(email, password) {
         reject(error);
       } else {
         const authenticated = results.length > 0;
-        resolve(authenticated);
+        if (authenticated) {
+          const updateQuery = 'UPDATE users SET token = ? WHERE email = ?';
+          const updateValues = [token, email];
+          pool.query(updateQuery, updateValues, (error, results) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(authenticated);
+            }
+          });
+        } else {
+          resolve(authenticated);
+        }
       }
     });
   });

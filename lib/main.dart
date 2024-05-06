@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       home: const MyHomePage(),
 
       routes: {
-        '/registration': (context) => LoginPage(),
+        '/registration': (context) => CustomTabBar(),
       },
     );
   }
