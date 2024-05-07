@@ -4,8 +4,14 @@ import 'dart:convert';
 import 'package:timetable_chel_gu/signup.dart';
 import 'package:timetable_chel_gu/ScheduleTab.dart';
 import 'package:timetable_chel_gu/CustomTabBar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logger/logger.dart';
 
 class LoginPage extends StatefulWidget {
+  final SharedPreferences prefs;
+
+  const LoginPage({Key? key, required this.prefs}) : super(key: key);
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -139,7 +145,7 @@ _getBottomRow() {
     ),
   );
 }
-
+  final Logger logger = Logger();
   void _login() async {
     final String url = 'http://localhost:3000/auth';
     String email = _emailController.text;
@@ -148,29 +154,30 @@ _getBottomRow() {
       print('Ошибка авторизации: Данные не соответствуют запросу');
       return;
     }
-
-    // Отправьте POST запрос на сервер
     try {
       http.Response response = await http.post(
         Uri.parse(url),
-        headers: {'Content-Type': 'application/json'}, 
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-        );
+          'email': email,
+          'password': password,
+        }),
+      );
       if (response.statusCode == 200) {
-        // Успешная авторизация
         final responseBody = jsonDecode(response.body);
         final token = responseBody['token'];
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_email', email);
+        logger.i(email);
+
         print('Пользователь успешно авторизован');
         print('Токен: $token');
         Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CustomTabBar(),
-    ),
-  );
+          context,
+          MaterialPageRoute(
+            builder: (context) => CustomTabBar(),
+          ),
+        );
       } else if (response.statusCode == 401) {
         // Неавторизованный доступ
         print('Не авторизован');
@@ -179,7 +186,6 @@ _getBottomRow() {
         print('Ошибка сервера: ${response.statusCode}');
       }
     } catch (error) {
-      // Ошибка при выполнении запроса
       print('Ошибка выполнения запроса: $error');
     }
   }

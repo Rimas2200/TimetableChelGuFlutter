@@ -4,13 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:timetable_chel_gu/loginPage.dart';
 // import 'package:timetable_chel_gu/ScheduleTab.dart';
 import 'package:timetable_chel_gu/CustomTabBar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SharedPreferences prefs;
+
+  const MyApp({Key? key, required this.prefs}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -19,17 +24,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(),
-
+      home: MyHomePage(prefs: prefs),
       routes: {
-        '/registration': (context) => CustomTabBar(),
+        '/registration': (context) => LoginPage(prefs: prefs),
       },
     );
   }
 }
 
 class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+  final SharedPreferences prefs;
+
+  const MyHomePage({Key? key, required this.prefs}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -21,7 +21,6 @@ class _SignUpPageState extends State<SignUpPage> {
       print('Ошибка регистрации: Данные не соответствуют запросу');
       return;
     }
-
     const url = 'http://localhost:3000/register';
     final response = await http.post(
       Uri.parse(url),
@@ -34,10 +33,8 @@ class _SignUpPageState extends State<SignUpPage> {
     );
 
     if (response.statusCode == 200) {
-      // User successfully registered
       print('Пользователь успешно зарегистрирован');
     } else {
-      // Handle registration error
       print('Ошибка регистрации: ${response.body}');
     }
   }

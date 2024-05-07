@@ -205,6 +205,44 @@ app.post('/auth', (req, res) => {
       res.status(500).json({ error: 'Ошибка сервера' });
     });
 });
+app.post('/users/profile_one', (req, res) => {
+  const { user_email, department, professor } = req.body;
+  if (!user_email || !department || !professor) {
+    console.log(user_email, department, professor);
+    return res.status(400).json({ error: 'Отсутствуют обязательные параметры' });
+  }
+  pool.query('UPDATE users SET departament = ?, professor = ? WHERE email = ?', [department, professor, user_email], (error, results) => {
+    if (error) {
+      console.error('Ошибка при обновлении данных:', error);
+      return res.status(500).json({ error: 'Ошибка сервера' });
+    }
+    if (results.affectedRows === 0) {
+      // Если ни одна строка не была обновлена, значит нет пользователя с такой почтой
+      return res.status(404).json({ error: 'Пользователь с указанной почтой не найден' });
+    }
+    return res.status(200).json({ message: 'Данные успешно обновлены' });
+  });
+});
+app.post('/users/profile_two', (req, res) => {
+  const { user_email, faculty, direction, group_name, subgroup} = req.body;
+  console.log(user_email, faculty, direction, group_name, subgroup);
+  if (!user_email || !direction || !group_name || !subgroup || !faculty) {
+    console.log(user_email, department, professor);
+    return res.status(400).json({ error: 'Отсутствуют обязательные параметры' });
+  }
+  pool.query('UPDATE users SET faculty = ?, direction = ?,  group_name = ?, subgroup = ? WHERE email = ?', [faculty, direction, group_name, subgroup, user_email], (error, results) => {
+    if (error) {
+      console.error('Ошибка при обновлении данных:', error);
+      return res.status(500).json({ error: 'Ошибка сервера' });
+    }
+    if (results.affectedRows === 0) {
+      // Если ни одна строка не была обновлена, значит нет пользователя с такой почтой
+      return res.status(404).json({ error: 'Пользователь с указанной почтой не найден' });
+    }
+    return res.status(200).json({ message: 'Данные успешно обновлены' });
+  });
+});
+
 
 // Функция проверки авторизации пользователя в бд
 function authenticateUser(email, password, token) {

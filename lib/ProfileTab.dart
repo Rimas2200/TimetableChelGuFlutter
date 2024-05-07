@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -41,7 +42,6 @@ class _ProfileTabState extends State<ProfileTab> {
       }
     });
   }
-
   @override
   void initState() {
     super.initState();
@@ -85,6 +85,57 @@ class _ProfileTabState extends State<ProfileTab> {
       logger.e('Error fetching departments: $error');
     });
   }
+  Future<void> sendDataToServers(String faculty, String direction, String groupName, String subGroup) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userEmail = prefs.getString('user_email') ?? ''; // Присваиваем пустую строку, если userEmail равен null
+    if (userEmail == null) {
+      logger.e('Ошибка: Почта пользователя не найдена в SharedPreferences');
+      return;
+    }
+    var url = Uri.parse('http://localhost:3000/users/profile_two');
+    logger.i('user_email: $userEmail, faculty: $faculty, direction: $direction, group_name: $groupName, subgroup: $subGroup');
+    var body = jsonEncode({
+      'user_email': userEmail,
+      'faculty': faculty,
+      'direction': direction,
+      'group_name': groupName,
+      'subgroup': subGroup,
+    });
+    var response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'}, // Укажем заголовок для сообщения о типе содержимого
+      body: body,
+    );
+    if (response.statusCode == 200) {
+      logger.e('Данные успешно отправлены');
+    } else {
+      logger.e('Ошибка отправки данных: ${response.statusCode}');
+    }
+  }
+  Future<void> sendDataToServer(String department, String teacher) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userEmail = prefs.getString('user_email') ?? '';
+    if (userEmail == null) {
+      logger.e('Ошибка: Почта пользователя не найдена в SharedPreferences');
+      return;
+    }
+    var url = Uri.parse('http://localhost:3000/users/profile_one');
+    var body = jsonEncode({
+      'user_email': userEmail,
+      'department': department,
+      'professor': teacher,
+    });
+    var response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+    if (response.statusCode == 200) {
+      logger.e('Данные успешно отправлены');
+    } else {
+      logger.e('Ошибка отправки данных: ${response.statusCode}');
+    }
+  }
   Future<List<String>> fetchDepartments() async {
     final response = await http.get(Uri.parse('http://localhost:3000/departament'));
     if (response.statusCode == 200) {
@@ -117,7 +168,6 @@ class _ProfileTabState extends State<ProfileTab> {
       throw Exception('Failed to load faculties');
     }
   }
-
   Future<void> fetchDirections(String faculty) async {
     final response = await http.get(Uri.parse('http://localhost:3000/directions/$faculty'));
     if (response.statusCode == 200) {
@@ -419,6 +469,9 @@ class _ProfileTabState extends State<ProfileTab> {
                           setState(() {
                             _selectedSubgroup = value;
                           });
+                          if (_selectedFaculty != null && _selectedDirection.isNotEmpty && _selectedGroup != null && value != null) {
+                            sendDataToServers(_selectedFaculty!, _selectedDirection![0], _selectedGroup!, value);
+                          }
                         },
                         hint: const Text('Подгруппа'),
                         icon: const Icon(Icons.expand_more_rounded),
@@ -469,6 +522,9 @@ class _ProfileTabState extends State<ProfileTab> {
                           setState(() {
                             _selectedTeacher = value;
                           });
+                          if (_selectedDepartment != null && _selectedTeacher != null) {
+                            sendDataToServer(_selectedDepartment!, _selectedTeacher!);
+                          }
                         },
                         hint: const Text('Преподаватель'),
                         icon: const Icon(Icons.expand_more_rounded),
