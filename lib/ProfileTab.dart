@@ -1,26 +1,147 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:logger/logger.dart';
 
 class ProfileTab extends StatefulWidget {
+  const ProfileTab({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _ProfileTabState createState() => _ProfileTabState();
 }
 
 class _ProfileTabState extends State<ProfileTab> {
-  String _selectedRole = 'Студент'; // Изначально выбрана роль "Студент"
+  String truncateDepartmentName(String name, int maxLength) {
+    if (name.length > maxLength) {
+      return '${name.substring(0, maxLength)}...';
+    }
+    return name;
+  }
+  final Logger logger = Logger();
+  List<String> _departments = [];
+  List<String> _faculties = [];
+  List<String> _selectedDirection = [];
+  List<String> _professors = [];
+  final List<String> _selectedGroups = [];
+  String _selectedRole = 'Студент';
   String? _selectedFaculty;
-  String? _selectedDirection;
-  String? _selectedGroup;
   String? _selectedSubgroup;
   String? _selectedTeacher;
   String? _selectedDepartment;
+  String? _selectedGroup;
+  List<String> _directions = [];
+  List<String> _groups = [];
+  final List<String> _subgroups = ['Подгруппа 1', 'Подгруппа 2', 'Подгруппа 3'];
+  List<String> _filteredTeachers = [];
+  void filterTeachers(String query) {
+    setState(() {
+      if (_filteredTeachers.isEmpty) {
+        _filteredTeachers = _professors.where((teacher) => teacher.toLowerCase().contains(query.toLowerCase())).toList();
+      }
+    });
+  }
 
-  List<String> _faculties = ['Факультет 1', 'Факультет 2', 'Факультет 3']; // Примеры значений для выпадающих списков
-  List<String> _directions = ['Направление 1', 'Направление 2', 'Направление 3'];
-  List<String> _groups = ['Группа 1', 'Группа 2', 'Группа 3'];
-  List<String> _subgroups = ['Подгруппа 1', 'Подгруппа 2', 'Подгруппа 3'];
-  List<String> _teachers = ['Преподаватель 1', 'Преподаватель 2', 'Преподаватель 3'];
-  List<String> _departments = ['Кафедра 1', 'Кафедра 2', 'Кафедра 3'];
+  @override
+  void initState() {
+    super.initState();
+    fetchFaculties().then((faculties) {
+      setState(() {
+        _faculties = faculties;
+      });
+    }).catchError((error) {
+      logger.e('Error fetching faculties: $error');
+    });
+    if (_selectedDepartment != null) {
+      fetchProfessors(_selectedDepartment!).catchError((error) {
+        logger.e('Error fetching professors: $error');
+      });
+    }
+    fetchDepartments().then((departments) {
+      setState(() {
+        _departments = departments;
+      });
+    }).catchError((error) {
+      logger.e('Error fetching departments: $error');
+    });
+    fetchFaculties().then((faculties) {
+      setState(() {
+        _faculties = faculties;
+      });
+    }).catchError((error) {
+      logger.e('Error fetching faculties: $error');
+    });
+    if (_selectedDepartment != null) {
+      fetchProfessors(_selectedDepartment!).catchError((error) {
+        logger.e('Error fetching professors: $error');
+      });
+    } else {
+    }
+    fetchDepartments().then((departments) {
+      setState(() {
+        _departments = departments;
+      });
+    }).catchError((error) {
+      logger.e('Error fetching departments: $error');
+    });
+  }
+  Future<List<String>> fetchDepartments() async {
+    final response = await http.get(Uri.parse('http://localhost:3000/departament'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      logger.i("department statusCode 200");
+      return data.map((item) => item['name'] as String).toList();
+    } else {
+      throw Exception('Failed to load departments');
+    }
+  }
+  Future<void> fetchProfessors(String department) async {
+    final response = await http.get(Uri.parse('http://localhost:3000/professor/$department'));
+    if (response.statusCode == 200) {
+      logger.i("professor statusCode 200");
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        _professors = data.map((item) => item['name'] as String).toList();
+      });
+    } else {
+      throw Exception('Failed to load professors');
+    }
+  }
+  Future<List<String>> fetchFaculties() async {
+    final response = await http.get(Uri.parse('http://localhost:3000/faculties'));
+    if (response.statusCode == 200) {
+      logger.i("faculties statusCode 200");
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((item) => item['faculty_name'] as String).toList();
+    } else {
+      throw Exception('Failed to load faculties');
+    }
+  }
 
+  Future<void> fetchDirections(String faculty) async {
+    final response = await http.get(Uri.parse('http://localhost:3000/directions/$faculty'));
+    if (response.statusCode == 200) {
+      logger.i("directions statusCode 200");
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        _directions = data.map((item) => item['direction_abbreviation'] as String).toList();
+      });
+    } else {
+      throw Exception('Failed to load directions');
+    }
+  }
+  Future<void> fetchGroups(String directionId) async {
+    final response = await http.get(Uri.parse('http://localhost:3000/group_name/$directionId'));
+    if (response.statusCode == 200) {
+      logger.i("group_name statusCode 200");
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        _groups = data.map((item) => item['name'] as String).toList();
+      });
+    } else {
+      throw Exception('Failed to load groups');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,23 +154,23 @@ class _ProfileTabState extends State<ProfileTab> {
               Expanded(
                 flex: 1,
                 child: Container(
-                  color: Color(0xFF6226A6), // Цвет верхнего блока 6226A6
+                  color: const Color(0xFF6226A6),
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Container(
+                        const SizedBox(
                           width: double.infinity,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Профиль', // Текст, который нужно отобразить
+                                'Профиль',
                                 style: TextStyle(
-                                  fontSize: 30, // Размер шрифта
-                                  fontWeight: FontWeight.w500, // Насыщенность шрифта
-                                  color: Colors.white, // Цвет текста
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
                                 ),
                               ),
                               // TextButton(
@@ -68,14 +189,14 @@ class _ProfileTabState extends State<ProfileTab> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 10), // Расстояние между текстом и окружностью
+                        const SizedBox(height: 10),
                         Container(
-                          width: 150, // Ширина полуокружности
-                          height: 75, // Высота полуокружности
-                          decoration: BoxDecoration(
-                            color: Colors.black12, // Цвет полуокружности
+                          width: 150,
+                          height: 75,
+                          decoration: const BoxDecoration(
+                            color: Colors.black12,
                             borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(100), // Радиус окружности
+                              topLeft: Radius.circular(100),
                               topRight: Radius.circular(100),
                             ),
                           ),
@@ -88,29 +209,29 @@ class _ProfileTabState extends State<ProfileTab> {
               Expanded(
                 flex: 1,
                 child: Container(
-                  color: Color(0xFFFFFFFF), // Цвет верхнего блока 6226A6
+                  color: const Color(0xFFFFFFFF),
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: Column(
                       children: [
                         Container(
-                          width: 150, // Ширина полуокружности
-                          height: 75, // Высота полуокружности
-                          decoration: BoxDecoration(
-                            color: Colors.black12, // Цвет полуокружности
+                          width: 150,
+                          height: 75,
+                          decoration: const BoxDecoration(
+                            color: Colors.black12,
                             borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(100), // Радиус окружности
+                              bottomLeft: Radius.circular(100),
                               bottomRight: Radius.circular(100),
                             ),
                           ),
                         ),
-                        SizedBox(height: 10), // Расстояние между окружностью и текстом
-                        Text(
-                          'ФИО', // Текст, который нужно отобразить
+                        const SizedBox(height: 10),
+                        const Text(
+                          'ФИО',
                           style: TextStyle(
-                            fontSize: 30, // Размер шрифта
-                            fontWeight: FontWeight.w600, // Насыщенность шрифта
-                            color: Colors.black, // Цвет текста
+                            fontSize: 30,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -124,92 +245,90 @@ class _ProfileTabState extends State<ProfileTab> {
         Expanded(
           flex: 2,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 38.0),
+            padding: const EdgeInsets.symmetric(horizontal: 38.0),
             child: Column(
               children: [
                 Container(
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Colors.black12, // Цвет рамки
-                        width: 2.0, // Ширина рамки
+                        color: Colors.black12,
+                        width: 2.0,
                       ),
-                      borderRadius: BorderRadius.circular(16.0), // Скругление углов
+                      borderRadius: BorderRadius.circular(16.0),
                     ),
                     child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 0.0),
-                        child: TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedRole = 'Студент';
-                            });
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                                  (states) => _selectedRole == 'Студент' ? Colors.white : Colors.white,
-                            ),
-                            foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                                  (states) => _selectedRole == 'Студент' ? Colors.purple : Colors.black54,
-                            ),
-                            shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
-                                  (states) => RoundedRectangleBorder(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16.0),
-                                  bottomLeft: Radius.circular(16.0),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedRole = 'Студент';
+                              });
+                            },
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                                    (states) => _selectedRole == 'Студент' ? Colors.white : Colors.white,
+                              ),
+                              foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                                    (states) => _selectedRole == 'Студент' ? Colors.purple : Colors.black54,
+                              ),
+                              shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
+                                    (states) => const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(16.0),
+                                    bottomLeft: Radius.circular(16.0),
+                                  ),
                                 ),
                               ),
-                            ),
-                            minimumSize: MaterialStateProperty.resolveWith<Size>(
-                                  (states) => Size(double.infinity, 48.0), // Вы можете изменить ширину кнопки, изменяя значение double.infinity или другое значение
-                            ),
-                          ),
-                          child: Text('Студент'),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 0.0),
-                        child: TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedRole = 'Преподаватель';
-                            });
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                                  (states) => _selectedRole == 'Преподаватель' ? Colors.white : Colors.white,
-                            ),
-                            foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                                  (states) => _selectedRole == 'Преподаватель' ? Colors.purple : Colors.black54,
-                            ),
-                            shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
-                                  (states) => RoundedRectangleBorder(
-                                borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(16.0),
-                                  bottomRight: Radius.circular(16.0),
-                                ),
+                              minimumSize: MaterialStateProperty.resolveWith<Size>(
+                                    (states) => const Size(double.infinity, 48.0),
                               ),
                             ),
-                            minimumSize: MaterialStateProperty.resolveWith<Size>(
-                                  (states) => Size(double.infinity, 48.0), // Вы можете изменить ширину кнопки, изменяя значение double.infinity или другое значение
-                            ),
+                            child: const Text('Студент'),
                           ),
-                          child: Text('Преподаватель'),
                         ),
                       ),
-                    ),
-                  ],
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedRole = 'Преподаватель';
+                              });
+                            },
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                                    (states) => _selectedRole == 'Преподаватель' ? Colors.white : Colors.white,
+                              ),
+                              foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                                    (states) => _selectedRole == 'Преподаватель' ? Colors.purple : Colors.black54,
+                              ),
+                              shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
+                                    (states) => const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                    topRight: Radius.circular(16.0),
+                                    bottomRight: Radius.circular(16.0),
+                                  ),
+                                ),
+                              ),
+                              minimumSize: MaterialStateProperty.resolveWith<Size>(
+                                    (states) => const Size(double.infinity, 48.0),
+                              ),
+                            ),
+                            child: const Text('Преподаватель'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                ),
-
-
                 if (_selectedRole == 'Студент') ...[
                   Container(
-                    margin: EdgeInsets.only(top: 16.0),
+                    margin: const EdgeInsets.only(top: 16.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: DropdownButton<String>(
@@ -223,20 +342,21 @@ class _ProfileTabState extends State<ProfileTab> {
                         onChanged: (value) {
                           setState(() {
                             _selectedFaculty = value;
+                            fetchDirections(value!);
                           });
                         },
-                        hint: Text('Факультет'),
-                        icon: Icon(Icons.expand_more_rounded),
+                        hint: const Text('Факультет'),
+                        icon: const Icon(Icons.expand_more_rounded),
                         isExpanded: true,
                       ),
                     ),
                   ),
-                Container(
-                  margin: EdgeInsets.only(top: 5.0),
-                      child :SizedBox(
+                  Container(
+                    margin: const EdgeInsets.only(top: 5.0),
+                    child: SizedBox(
                       width: double.infinity,
                       child: DropdownButton<String>(
-                        value: _selectedDirection,
+                        value: _selectedDirection.isNotEmpty ? _selectedDirection[0] : null,
                         items: _directions.map((String direction) {
                           return DropdownMenuItem<String>(
                             value: direction,
@@ -245,17 +365,18 @@ class _ProfileTabState extends State<ProfileTab> {
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedDirection = value;
+                            _selectedDirection = [value!];
+                            fetchGroups(value);
                           });
                         },
-                        hint: Text('Направление'),
-                        icon: Icon(Icons.expand_more_rounded),
+                        hint: const Text('Направление'),
+                        icon: const Icon(Icons.expand_more_rounded),
                         isExpanded: true,
                       ),
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.only(top: 5.0),
+                    margin: const EdgeInsets.only(top: 5.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: DropdownButton<String>(
@@ -268,17 +389,22 @@ class _ProfileTabState extends State<ProfileTab> {
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedGroup = value;
+                            if (value != null) {
+                              if (!_selectedGroups.contains(value)) {
+                                _selectedGroups.add(value);
+                              }
+                              _selectedGroup = value;
+                            }
                           });
                         },
-                        hint: Text('Группа'),
-                        icon: Icon(Icons.expand_more_rounded),
+                        hint: const Text('Группа'),
+                        icon: const Icon(Icons.expand_more_rounded),
                         isExpanded: true,
                       ),
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.only(top: 5.0),
+                    margin: const EdgeInsets.only(top: 5.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: DropdownButton<String>(
@@ -294,8 +420,8 @@ class _ProfileTabState extends State<ProfileTab> {
                             _selectedSubgroup = value;
                           });
                         },
-                        hint: Text('Подгруппа'),
-                        icon: Icon(Icons.expand_more_rounded),
+                        hint: const Text('Подгруппа'),
+                        icon: const Icon(Icons.expand_more_rounded),
                         isExpanded: true,
                       ),
                     ),
@@ -303,12 +429,37 @@ class _ProfileTabState extends State<ProfileTab> {
                 ],
                 if (_selectedRole == 'Преподаватель') ...[
                   Container(
-                    margin: EdgeInsets.only(top: 16.0),
+                    margin: const EdgeInsets.only(top: 5.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: DropdownButton<String>(
+                        value: _selectedDepartment,
+                        itemHeight: 60,
+                        items: _departments.map((String department) {
+                          return DropdownMenuItem<String>(
+                            value: department,
+                            child: Text(truncateDepartmentName(department, 54)),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedDepartment = value;
+                            fetchProfessors(value!);
+                          });
+                        },
+                        hint: const Text('Кафедра'),
+                        icon: const Icon(Icons.expand_more_rounded),
+                        isExpanded: true,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(top: 16.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: DropdownButton<String>(
                         value: _selectedTeacher,
-                        items: _teachers.map((String teacher) {
+                        items: _professors.map((String teacher) {
                           return DropdownMenuItem<String>(
                             value: teacher,
                             child: Text(teacher),
@@ -316,34 +467,11 @@ class _ProfileTabState extends State<ProfileTab> {
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedTeacher= value;
+                            _selectedTeacher = value;
                           });
                         },
-                        hint: Text('Преподаватель'),
-                        icon: Icon(Icons.expand_more_rounded),
-                        isExpanded: true,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(top: 5.0),
-                      child: SizedBox(
-                      width: double.infinity,
-                      child: DropdownButton<String>(
-                        value: _selectedDepartment,
-                        items: _departments.map((String department) {
-                          return DropdownMenuItem<String>(
-                            value: department,
-                            child: Text(department),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedDepartment = value;
-                          });
-                        },
-                        hint: Text('Кафедра'),
-                        icon: Icon(Icons.expand_more_rounded),
+                        hint: const Text('Преподаватель'),
+                        icon: const Icon(Icons.expand_more_rounded),
                         isExpanded: true,
                       ),
                     ),
@@ -355,4 +483,5 @@ class _ProfileTabState extends State<ProfileTab> {
         ),
       ],
     );
-  }}
+  }
+}

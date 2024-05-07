@@ -15,9 +15,9 @@ const pool = mysql.createPool({
 app.use(express.json());
 app.use(cors()); 
 
-app.get('/', (req, res) => {
-  res.send('Добро пожаловать на сервер!');
-});
+//app.get('/', (req, res) => {
+//  res.send('Добро пожаловать на сервер!');
+//});
 
 app.get('/faculties', (req, res) => {
   // Запрос на получение списка факультетов из базы данных
@@ -33,11 +33,86 @@ app.get('/faculties', (req, res) => {
         res.json(results);
       } else {
         // Если результаты отсутствуют, отправляем пустой список
-        res.json(["обит 50/50"]);
+        res.json([]);
       }
     }
   });
 });
+app.get('/departament', (req, res) => {
+  // Запрос на получение списка кафедр из базы данных
+  pool.query('SELECT * FROM departament', (error, results) => {
+    if (error) {
+      // Если произошла ошибка при выполнении запроса
+      console.error('Ошибка при выполнении запроса:', error);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    } else {
+      // Если запрос выполнен успешно, проверяем, есть ли результаты
+      if (results && results.length > 0) {
+        // Если есть результаты, отправляем список факультетов на клиент
+        res.json(results);
+      } else {
+        // Если результаты отсутствуют, отправляем пустой список
+        res.json([]);
+      }
+    }
+  });
+});
+app.get('/professor/:department', (req, res) => {
+  const department = req.params.department;
+  // Запрос на получение списка профессоров из базы данных для выбранной кафедры
+  pool.query('SELECT CONCAT(last_name, " ", LEFT(first_name, 1), ". ", LEFT(middle_name, 1), ".") AS name FROM professor WHERE departement = ?', [department], (error, results) => {
+    if (error) {
+      console.error('Ошибка при выполнении запроса:', error);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    } else {
+      if (results && results.length > 0) {
+        res.json(results);
+      } else {
+        res.json([]);
+      }
+    }
+  });
+});
+
+
+app.get('/directions/:facultyId', (req, res) => {
+  const facultyId = req.params.facultyId;
+  // Запрос на получение списка направлений обучения по выбранному факультету
+  pool.query('SELECT direction_abbreviation FROM direction WHERE faculty = ?', [facultyId], (error, results) => {
+    if (error) {
+      // Если произошла ошибка при выполнении запроса
+      console.error('Ошибка при выполнении запроса:', error);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    } else {
+      // Если запрос выполнен успешно, проверяем, есть ли результаты
+      if (results && results.length > 0) {
+        // Если есть результаты, отправляем список направлений на клиент
+        res.json(results);
+      } else {
+        // Если результаты отсутствуют, отправляем пустой список
+        res.json([]);
+      }
+    }
+  });
+});
+app.get('/group_name/:directionId', (req, res) => {
+  const directionId = req.params.directionId;
+  // Запрос на получение списка групп по выбранному направлению
+  pool.query('SELECT name FROM group_name WHERE direction_abbreviation = ?', [directionId], (error, results) => {
+    if (error) {
+      console.error('Ошибка при выполнении запроса:', error);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    } else {
+      if (results && results.length > 0) {
+        res.json(results);
+      } else {
+        res.json([]);
+      }
+    }
+  });
+});
+
+
 
 
 // Обработчик POST-запроса на /register
