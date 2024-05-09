@@ -33,6 +33,7 @@ class _ProfileTabState extends State<ProfileTab> {
   String? _selectedGroup;
   List<String> _directions = [];
   List<String> _groups = [];
+  String? _username;
   final List<String> _subgroups = ['Подгруппа 1', 'Подгруппа 2', 'Подгруппа 3'];
   List<String> _filteredTeachers = [];
   void filterTeachers(String query) {
@@ -45,6 +46,12 @@ class _ProfileTabState extends State<ProfileTab> {
   @override
   void initState() {
     super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      String userEmail = prefs.getString('user_email') ?? '';
+      fetchUserData(userEmail);
+    }).catchError((error) {
+      logger.e('Ошибка при получении SharedPreferences: $error');
+    });
     fetchFaculties().then((faculties) {
       setState(() {
         _faculties = faculties;
@@ -85,9 +92,21 @@ class _ProfileTabState extends State<ProfileTab> {
       logger.e('Error fetching departments: $error');
     });
   }
+  Future<void> fetchUserData(String userEmail) async {
+    var url = Uri.parse('http://localhost:3000/userstests?userEmail=$userEmail');
+    var response = await http.get(url);
+    if (response.statusCode == 200) {
+      var userData = jsonDecode(response.body);
+      setState(() {
+        _username = userData['username'];
+      });
+    } else {
+      logger.e('Ошибка при получении данных пользователя: ${response.statusCode}');
+    }
+  }
   Future<void> sendDataToServers(String faculty, String direction, String groupName, String subGroup) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userEmail = prefs.getString('user_email') ?? ''; // Присваиваем пустую строку, если userEmail равен null
+    String userEmail = prefs.getString('user_email') ?? '';
     if (userEmail == null) {
       logger.e('Ошибка: Почта пользователя не найдена в SharedPreferences');
       return;
@@ -103,11 +122,17 @@ class _ProfileTabState extends State<ProfileTab> {
     });
     var response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json'}, // Укажем заголовок для сообщения о типе содержимого
+      headers: {'Content-Type': 'application/json'},
       body: body,
     );
     if (response.statusCode == 200) {
       logger.e('Данные успешно отправлены');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Данные успешно отправлены'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     } else {
       logger.e('Ошибка отправки данных: ${response.statusCode}');
     }
@@ -132,6 +157,12 @@ class _ProfileTabState extends State<ProfileTab> {
     );
     if (response.statusCode == 200) {
       logger.e('Данные успешно отправлены');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Данные успешно отправлены'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     } else {
       logger.e('Ошибка отправки данных: ${response.statusCode}');
     }
@@ -192,7 +223,6 @@ class _ProfileTabState extends State<ProfileTab> {
       throw Exception('Failed to load groups');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -223,19 +253,6 @@ class _ProfileTabState extends State<ProfileTab> {
                                   color: Colors.white,
                                 ),
                               ),
-                              // TextButton(
-                              //   onPressed: () {
-                              //     // Обработчик нажатия на кнопку "Выход"
-                              //     // Реализуйте здесь код для выхода пользователя
-                              //   },
-                              //   child: Text(
-                              //     'Выход',
-                              //     style: TextStyle(
-                              //       fontSize: 20,
-                              //       color: Colors.white,
-                              //     ),
-                              //   ),
-                              // ),
                             ],
                           ),
                         ),
@@ -244,7 +261,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           width: 150,
                           height: 75,
                           decoration: const BoxDecoration(
-                            color: Colors.black12,
+                            color: Color(0xFFD3D3D3),
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(100),
                               topRight: Radius.circular(100),
@@ -268,7 +285,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           width: 150,
                           height: 75,
                           decoration: const BoxDecoration(
-                            color: Colors.black12,
+                            color: Color(0xFFD3D3D3),
                             borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(100),
                               bottomRight: Radius.circular(100),
@@ -276,9 +293,9 @@ class _ProfileTabState extends State<ProfileTab> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        const Text(
-                          'ФИО',
-                          style: TextStyle(
+                        Text(
+                          _username ?? '',
+                          style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,

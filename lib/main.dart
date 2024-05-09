@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:timetable_chel_gu/RegistrationPage.dart';
-// import 'package:timetable_chel_gu/signup.dart';
 import 'package:timetable_chel_gu/loginPage.dart';
-// import 'package:timetable_chel_gu/ScheduleTab.dart';
-import 'package:timetable_chel_gu/CustomTabBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -24,33 +20,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(prefs: prefs),
+      home: LoginPage(prefs: prefs),
       routes: {
         '/registration': (context) => LoginPage(prefs: prefs),
       },
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  final SharedPreferences prefs;
-
-  const MyHomePage({Key? key, required this.prefs}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          child: const Text('Go to Registration'),
-          onPressed: () {
-            Navigator.pushNamed(context, '/registration');
-          },
-        ),
-      ),
     );
   }
 }

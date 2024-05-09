@@ -25,7 +25,7 @@ class _CustomTabBarState extends State<CustomTabBar> {
             child: IndexedStack(
               index: _currentIndex,
               children: [
-                const ScheduleTab(), 
+                ScheduleTab(),
                 SettingsTab(),   
                 ProfileTab(),  
               ],
@@ -44,15 +44,15 @@ class _CustomTabBarState extends State<CustomTabBar> {
         showUnselectedLabels: false,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
+            icon: Icon(Icons.person),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
             label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
             label: '',
           ),
         ],

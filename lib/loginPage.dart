@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:timetable_chel_gu/signup.dart';
-import 'package:timetable_chel_gu/ScheduleTab.dart';
 import 'package:timetable_chel_gu/CustomTabBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
 
 class LoginPage extends StatefulWidget {
   final SharedPreferences prefs;
-
   const LoginPage({Key? key, required this.prefs}) : super(key: key);
 
   @override
@@ -17,8 +15,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       flex: 3,
       child: Container(
         alignment: Alignment.bottomLeft,
-        child: Text(
+        child: const Text(
           'Добро пожаловать',
           style: TextStyle(color: Colors.white, fontSize: 37),
         ),
@@ -65,17 +63,17 @@ class _LoginPageState extends State<LoginPage> {
         children: <Widget>[
           TextFormField(
             controller: _emailController,
-            decoration: InputDecoration(labelText: 'Email'),
+            decoration: const InputDecoration(labelText: 'Email'),
           ),
-          SizedBox(
+          const SizedBox(
             height: 15,
           ),
           TextFormField(
             controller: _passwordController,
             obscureText: true,
-            decoration: InputDecoration(labelText: 'Пароль'),
+            decoration: const InputDecoration(labelText: 'Пароль'),
           ),
-          SizedBox(
+          const SizedBox(
             height: 15,
           ),
         ],
@@ -89,15 +87,20 @@ class _LoginPageState extends State<LoginPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(
-            'Вход',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
+          InkWell(
+            onTap: () {
+              _login();
+            },
+            child: const Text(
+              'Вход',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w500, color: Colors.black),
+            ),
           ),
           CircleAvatar(
             backgroundColor: Colors.grey.shade800,
             radius: 40,
             child: IconButton(
-              icon: Icon(
+              icon: const Icon(
                 Icons.arrow_forward_ios,
                 color: Colors.white,
               ),
@@ -111,47 +114,53 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-_getBottomRow() {
-  return Expanded(
-    flex: 1,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SignUpPage()),
-            );
-          },
-          child: Text(
-            'Регистрация',
+  _getBottomRow() {
+    return Expanded(
+      flex: 1,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SignUpPage()),
+              );
+            },
+            child: const Text(
+              'Регистрация',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+          const Text(
+            '',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
               decoration: TextDecoration.underline,
             ),
           ),
-        ),
-        Text(
-          '',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            decoration: TextDecoration.underline,
-          ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
   final Logger logger = Logger();
   void _login() async {
-    final String url = 'http://localhost:3000/auth';
+    const String url = 'http://localhost:3000/auth';
     String email = _emailController.text;
     String password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
-      print('Ошибка авторизации: Данные не соответствуют запросу');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Пожалуйста, заполните все поля.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
       return;
     }
     try {
@@ -169,24 +178,34 @@ _getBottomRow() {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_email', email);
         logger.i(email);
-
-        print('Пользователь успешно авторизован');
-        print('Токен: $token');
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomTabBar(),
+            builder: (context) => const CustomTabBar(),
           ),
         );
       } else if (response.statusCode == 401) {
-        // Неавторизованный доступ
-        print('Не авторизован');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Вы ввели неверный адрес электронной почты или пароль'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       } else {
-        // Ошибка сервера
-        print('Ошибка сервера: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Произошла ошибка на сервере.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     } catch (error) {
-      print('Ошибка выполнения запроса: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка выполнения запроса.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
 }

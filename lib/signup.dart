@@ -18,8 +18,12 @@ class _SignUpPageState extends State<SignUpPage> {
     final password = passwordController.text;
 
     if (username.isEmpty || email.isEmpty || password.isEmpty) {
-      print('Ошибка регистрации: Данные не соответствуют запросу');
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Пожалуйста, заполните все поля.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
     const url = 'http://localhost:3000/register';
     final response = await http.post(
@@ -31,14 +35,23 @@ class _SignUpPageState extends State<SignUpPage> {
         'password': password,
       }),
     );
-
     if (response.statusCode == 200) {
-      print('Пользователь успешно зарегистрирован');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Пользователь успешно зарегистрирован!'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     } else {
-      print('Ошибка регистрации: ${response.body}');
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(
+      //     content: Text('Адрес электронной почты уже занят'),
+      //     duration: Duration(seconds: 3),
+      //   ),
+      // );
+      // print('Ошибка регистрации: ${response.body}');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +84,6 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     );
   }
-
   Widget _getHeader() {
     return Expanded(
       flex: 3,
@@ -84,7 +96,6 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     );
   }
-
   Widget _getInputs() {
     return Expanded(
       flex: 4,
@@ -134,7 +145,6 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     );
   }
-
   Widget _getSignUp() {
     return Expanded(
       flex: 2,
@@ -156,19 +166,22 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
           ),
-          CircleAvatar(
-            backgroundColor: Colors.grey.shade800,
-            radius: 40,
-            child: const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white,
+          GestureDetector(
+            onTap: registerUser,
+            child: CircleAvatar(
+              backgroundColor: Colors.grey.shade800,
+              radius: 40,
+              child: const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+              ),
             ),
-          )
+          ),
+
         ],
       ),
     );
   }
-
   Widget _getBottomRow(context) {
     return Expanded(
       flex: 1,
@@ -192,8 +205,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 }
-
-
 class BackgroundSignUp extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
