@@ -296,7 +296,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         Text(
                           _username ?? '',
                           style: const TextStyle(
-                            fontSize: 30,
+                            fontSize: 28,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
                           ),

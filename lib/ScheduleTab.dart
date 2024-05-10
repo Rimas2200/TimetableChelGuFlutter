@@ -54,7 +54,7 @@ class _ScheduleTabState extends State<ScheduleTab> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Добро пожаловать!'),
-              content: const Text('Следующий шаг:              Вам необходимо заполнить поля, чтобы я мог найти для вас подходящее расписание! Вы можете это сделать во вкладке "Настройки"'),
+              content: const Text('Следующий шаг: Вам необходимо заполнить поля, чтобы я мог найти для вас подходящее расписание! Вы можете это сделать во вкладке "Настройки"'),
               actions: <Widget>[
                 TextButton(
                   child: const Text('ОК'),
@@ -206,27 +206,28 @@ class _HeaderRowState extends State<HeaderRow> {
     }
     return Expanded(
       flex: 7,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Время',
-                    style: TextStyle(
-                      color: Colors.black38,
-                      fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Время',
+                      style: TextStyle(
+                        color: Colors.black38,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 5),
-                Expanded(
-                  child: ListView.builder(
+                  const SizedBox(height: 5),
+                  ListView.builder(
+                    shrinkWrap: true,
                     itemCount: scheduleData.length,
                     itemBuilder: (context, index) {
                       var entry = scheduleData[index];
@@ -234,10 +235,6 @@ class _HeaderRowState extends State<HeaderRow> {
                       return Container(
                         margin: const EdgeInsets.all(8.0),
                         padding: const EdgeInsets.all(8.0),
-                        // decoration: BoxDecoration(
-                        //   border: Border.all(color: Colors.black),
-                        //   borderRadius: BorderRadius.circular(8.0),
-                        // ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -270,49 +267,27 @@ class _HeaderRowState extends State<HeaderRow> {
                       );
                     },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-          Expanded(
-            flex: 7,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'Расписание',
-                        style: TextStyle(
-                          color: Colors.black38,
-                          fontWeight: FontWeight.bold,
-                        ),
+            const SizedBox(width: 1),
+            Expanded(
+              flex: 7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Расписание',
+                      style: TextStyle(
+                        color: Colors.black38,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // Row(
-                    //   children: [
-                    //     IconButton(
-                    //       icon: Icon(Icons.person),
-                    //       onPressed: () {
-                    //         // Действие при выборе студента
-                    //       },
-                    //     ),
-                    //     IconButton(
-                    //       icon: Icon(Icons.school),
-                    //       onPressed: () {
-                    //         // Действие при выборе преподавателя
-                    //       },
-                    //     ),
-                    //   ],
-                    // ),
-                  ],
-                ),
-                Expanded(
-                  child: ListView.builder(
+                  ),
+                  ListView.builder(
+                    shrinkWrap: true,
                     itemCount: scheduleData.length,
                     itemBuilder: (context, index) {
                       var entry = scheduleData[index];
@@ -320,7 +295,6 @@ class _HeaderRowState extends State<HeaderRow> {
                         margin: const EdgeInsets.all(8.0),
                         padding: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
-                          // border: Border.all(color: Colors.white),
                           borderRadius: BorderRadius.circular(8.0),
                           color: const Color(0xFF6226A6),
                         ),
@@ -334,7 +308,10 @@ class _HeaderRowState extends State<HeaderRow> {
                                 color: Colors.white,
                                 fontSize: 16,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
+
                             OutlinedButton.icon(
                               onPressed: () {},
                               style: ButtonStyle(
@@ -368,14 +345,15 @@ class _HeaderRowState extends State<HeaderRow> {
                       );
                     },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
 }
 
 class CalendarTab extends StatefulWidget {

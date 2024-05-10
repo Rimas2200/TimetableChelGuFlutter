@@ -68,7 +68,8 @@ app.get('/schedule/teacher', (req, res) => {
     if (!userResults || userResults.length === 0 || !userResults[0].professor || !userResults[0].departament) {
       return res.status(400).json({ error: 'Fill in your information' });
     }
-    pool.query('SELECT * FROM schedule WHERE group_name = ? AND subgroup = ? AND day_of_the_week = ? AND (week = ? OR week = "")', [userResults[0].group_name, userResults[0].subgroup, weekday, weekType], (error, results) => {
+    pool.query('SELECT * FROM schedule WHERE teacher_name = ? AND day_of_the_week = ? AND (week = ? OR week = "")', [userResults[0].professor, weekday, weekType], (error, results) => {
+    console.log(userResults[0].professor, weekday, weekType);
       if (error) {
         console.error('Error executing schedule query:', error);
         return res.status(500).json({ error: 'Server error' });
