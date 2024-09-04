@@ -7,8 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
 
 class LoginPage extends StatefulWidget {
-  final SharedPreferences prefs;
-  const LoginPage({Key? key, required this.prefs}) : super(key: key);
+  final SharedPreferences? prefs;
+
+  const LoginPage({Key? key, this.prefs}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -17,6 +18,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool _isPasswordVisible = false; // Добавлено состояние для видимости пароля
 
   @override
   Widget build(BuildContext context) {
@@ -63,15 +66,27 @@ class _LoginPageState extends State<LoginPage> {
         children: <Widget>[
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(labelText: 'Email'),
+            decoration: const InputDecoration(labelText: 'Логин'),
           ),
           const SizedBox(
             height: 15,
           ),
           TextFormField(
             controller: _passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Пароль'),
+            obscureText: !_isPasswordVisible,
+            decoration: InputDecoration(
+              labelText: 'Пароль',
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              ),
+            ),
           ),
           const SizedBox(
             height: 15,
@@ -151,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final Logger logger = Logger();
   void _login() async {
-    const String url = 'http://localhost:3000/auth';
+    const String url = 'https://umo.csu.ru/auth';
     String email = _emailController.text;
     String password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
@@ -209,6 +224,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 }
+
 
 class BackgroundSignIn extends CustomPainter {
   @override

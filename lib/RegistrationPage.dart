@@ -13,7 +13,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> registerUser() async {
-    final url = 'http://localhost:3000/register';
+    final url = 'https://umo.csu.ru/register';
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},

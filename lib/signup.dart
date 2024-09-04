@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:timetable_chel_gu/loginPage.dart';
 import 'dart:convert';
 
 class SignUpPage extends StatefulWidget {
@@ -11,21 +12,38 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   Future<void> registerUser() async {
     final username = usernameController.text;
     final email = emailController.text;
     final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
 
-    if (username.isEmpty || email.isEmpty || password.isEmpty) {
+    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Пожалуйста, заполните все поля.'),
           duration: Duration(seconds: 3),
         ),
       );
+      return;
     }
-    const url = 'http://localhost:3000/register';
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Пароли не совпадают.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    const url = 'https://umo.csu.ru/register';
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -35,6 +53,7 @@ class _SignUpPageState extends State<SignUpPage> {
         'password': password,
       }),
     );
+
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -42,16 +61,25 @@ class _SignUpPageState extends State<SignUpPage> {
           duration: Duration(seconds: 3),
         ),
       );
-    } else {
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(
-      //     content: Text('Адрес электронной почты уже занят'),
-      //     duration: Duration(seconds: 3),
-      //   ),
-      // );
-      // print('Ошибка регистрации: ${response.body}');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              LoginPage(),
+        ),
+      );
+    }
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ошибка регистрации. Логин уже занят.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      print('Ошибка регистрации: ${response.body}');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,7 +92,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 Navigator.pop(context);
               },
               child: Container(
-                padding: const EdgeInsets.only(left: 25.0, top: 35.0),
+                padding: const EdgeInsets.only(left: 25.0, top: 45.0),
                 child: const Icon(Icons.arrow_back_ios, color: Colors.white),
               ),
             ),
@@ -84,6 +112,7 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     );
   }
+
   Widget _getHeader() {
     return Expanded(
       flex: 3,
@@ -91,19 +120,21 @@ class _SignUpPageState extends State<SignUpPage> {
         alignment: Alignment.bottomLeft,
         child: const Text(
           'Регистрация',
-          style: TextStyle(color: Colors.white, fontSize: 37),
+          style: TextStyle(color: Colors.white, fontSize: 35),
         ),
       ),
     );
   }
+
   Widget _getInputs() {
     return Expanded(
-      flex: 4,
+      flex: 7,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           TextField(
-            controller: usernameController,
+            controller: emailController,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
             decoration: const InputDecoration(
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
@@ -112,11 +143,10 @@ class _SignUpPageState extends State<SignUpPage> {
               labelStyle: TextStyle(color: Colors.white),
             ),
           ),
-          const SizedBox(
-            height: 15,
-          ),
+          const SizedBox(height: 15),
           TextField(
-            controller: emailController,
+            controller: usernameController,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
             decoration: const InputDecoration(
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
@@ -125,29 +155,63 @@ class _SignUpPageState extends State<SignUpPage> {
               labelStyle: TextStyle(color: Colors.white),
             ),
           ),
-          const SizedBox(
-            height: 15,
-          ),
+          const SizedBox(height: 15),
           TextField(
             controller: passwordController,
-            decoration: const InputDecoration(
-              enabledBorder: UnderlineInputBorder(
+            style: const TextStyle(fontSize: 18),
+            decoration: InputDecoration(
+              enabledBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
               ),
               labelText: 'Пароль',
-              labelStyle: TextStyle(color: Colors.white),
+              labelStyle: const TextStyle(color: Colors.white),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              ),
             ),
+            obscureText: !_isPasswordVisible,
           ),
-          const SizedBox(
-            height: 15,
+          const SizedBox(height: 15),
+          TextField(
+            controller: confirmPasswordController,
+            style: const TextStyle(fontSize: 18),
+            decoration: InputDecoration(
+              enabledBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              labelText: 'Повторите пароль',
+              labelStyle: const TextStyle(color: Colors.white),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                  });
+                },
+              ),
+            ),
+            obscureText: !_isConfirmPasswordVisible,
           ),
+          const SizedBox(height: 15),
         ],
       ),
     );
   }
+
   Widget _getSignUp() {
     return Expanded(
-      flex: 2,
+      flex: 1,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
@@ -177,11 +241,11 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
           ),
-
         ],
       ),
     );
   }
+
   Widget _getBottomRow(context) {
     return Expanded(
       flex: 1,
@@ -205,6 +269,8 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 }
+
+
 class BackgroundSignUp extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -229,7 +295,7 @@ class BackgroundSignUp extends CustomPainter {
     Path greyPath = Path();
     greyPath.lineTo(sw, 0);
     greyPath.lineTo(sw, sh * 0.3);
-    greyPath.cubicTo(sw * 0.65, sh * 0.45, sw * 0.25, sh * 0.35, 0, sh * 0.5);
+    greyPath.cubicTo(sw * 0.75, sh * 0.55, sw * 0.35, sh * 0.45, 0, sh * 0.5);
     greyPath.close();
     paint.color = Colors.grey.shade800;
     canvas.drawPath(greyPath, paint);

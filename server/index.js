@@ -8,7 +8,7 @@ const app = express();
 const pool = mysql.createPool({
   host: '127.0.0.1',
   user: 'root',
-  database: 'respGlobalChange',
+  database: 'umo',
   password: '',
 });
 
@@ -127,6 +127,7 @@ app.get('/faculties', (req, res) => {
 });
 app.get('/departament', (req, res) => {
   pool.query('SELECT * FROM departament', (error, results) => {
+
     if (error) {
       console.error('Ошибка при выполнении запроса:', error);
       res.status(500).json({ error: 'Ошибка сервера' });

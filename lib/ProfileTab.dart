@@ -34,7 +34,7 @@ class _ProfileTabState extends State<ProfileTab> {
   List<String> _directions = [];
   List<String> _groups = [];
   String? _username;
-  final List<String> _subgroups = ['Подгруппа 1', 'Подгруппа 2', 'Подгруппа 3'];
+  final List<String> _subgroups = ['1', '2', '3'];
   List<String> _filteredTeachers = [];
   void filterTeachers(String query) {
     setState(() {
@@ -93,7 +93,7 @@ class _ProfileTabState extends State<ProfileTab> {
     });
   }
   Future<void> fetchUserData(String userEmail) async {
-    var url = Uri.parse('http://localhost:3000/userstests?userEmail=$userEmail');
+    var url = Uri.parse('https://umo.csu.ru/userstests?userEmail=$userEmail');
     var response = await http.get(url);
     if (response.statusCode == 200) {
       var userData = jsonDecode(response.body);
@@ -111,7 +111,7 @@ class _ProfileTabState extends State<ProfileTab> {
       logger.e('Ошибка: Почта пользователя не найдена в SharedPreferences');
       return;
     }
-    var url = Uri.parse('http://localhost:3000/users/profile_two');
+    var url = Uri.parse('https://umo.csu.ru/users/profile_two');
     logger.i('user_email: $userEmail, faculty: $faculty, direction: $direction, group_name: $groupName, subgroup: $subGroup');
     var body = jsonEncode({
       'user_email': userEmail,
@@ -144,7 +144,7 @@ class _ProfileTabState extends State<ProfileTab> {
       logger.e('Ошибка: Почта пользователя не найдена в SharedPreferences');
       return;
     }
-    var url = Uri.parse('http://localhost:3000/users/profile_one');
+    var url = Uri.parse('https://umo.csu.ru/users/profile_one');
     var body = jsonEncode({
       'user_email': userEmail,
       'department': department,
@@ -168,7 +168,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
   Future<List<String>> fetchDepartments() async {
-    final response = await http.get(Uri.parse('http://localhost:3000/departament'));
+    final response = await http.get(Uri.parse('https://umo.csu.ru/departament'));
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       logger.i("department statusCode 200");
@@ -178,7 +178,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
   Future<void> fetchProfessors(String department) async {
-    final response = await http.get(Uri.parse('http://localhost:3000/professor/$department'));
+    final response = await http.get(Uri.parse('https://umo.csu.ru/professor/$department'));
     if (response.statusCode == 200) {
       logger.i("professor statusCode 200");
       final List<dynamic> data = json.decode(response.body);
@@ -190,7 +190,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
   Future<List<String>> fetchFaculties() async {
-    final response = await http.get(Uri.parse('http://localhost:3000/faculties'));
+    final response = await http.get(Uri.parse('https://umo.csu.ru/faculties'));
     if (response.statusCode == 200) {
       logger.i("faculties statusCode 200");
       final List<dynamic> data = json.decode(response.body);
@@ -200,7 +200,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
   Future<void> fetchDirections(String faculty) async {
-    final response = await http.get(Uri.parse('http://localhost:3000/directions/$faculty'));
+    final response = await http.get(Uri.parse('https://umo.csu.ru/directions/$faculty'));
     if (response.statusCode == 200) {
       logger.i("directions statusCode 200");
       final List<dynamic> data = json.decode(response.body);
@@ -212,7 +212,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
   Future<void> fetchGroups(String directionId) async {
-    final response = await http.get(Uri.parse('http://localhost:3000/group_name/$directionId'));
+    final response = await http.get(Uri.parse('https://umo.csu.ru/group_name/$directionId'));
     if (response.statusCode == 200) {
       logger.i("group_name statusCode 200");
       final List<dynamic> data = json.decode(response.body);
@@ -339,10 +339,10 @@ class _ProfileTabState extends State<ProfileTab> {
                               backgroundColor: MaterialStateProperty.resolveWith<Color>(
                                     (states) => _selectedRole == 'Студент' ? Colors.white : Colors.white,
                               ),
-                              foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                              foregroundColor: WidgetStateProperty.resolveWith<Color>(
                                     (states) => _selectedRole == 'Студент' ? Colors.purple : Colors.black54,
                               ),
-                              shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
+                              shape: WidgetStateProperty.resolveWith<OutlinedBorder>(
                                     (states) => const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.only(
                                     topLeft: Radius.circular(16.0),
@@ -350,7 +350,7 @@ class _ProfileTabState extends State<ProfileTab> {
                                   ),
                                 ),
                               ),
-                              minimumSize: MaterialStateProperty.resolveWith<Size>(
+                              minimumSize: WidgetStateProperty.resolveWith<Size>(
                                     (states) => const Size(double.infinity, 48.0),
                               ),
                             ),
@@ -368,13 +368,13 @@ class _ProfileTabState extends State<ProfileTab> {
                               });
                             },
                             style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                              backgroundColor: WidgetStateProperty.resolveWith<Color>(
                                     (states) => _selectedRole == 'Преподаватель' ? Colors.white : Colors.white,
                               ),
-                              foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                              foregroundColor: WidgetStateProperty.resolveWith<Color>(
                                     (states) => _selectedRole == 'Преподаватель' ? Colors.purple : Colors.black54,
                               ),
-                              shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
+                              shape: WidgetStateProperty.resolveWith<OutlinedBorder>(
                                     (states) => const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.only(
                                     topRight: Radius.circular(16.0),
@@ -382,7 +382,7 @@ class _ProfileTabState extends State<ProfileTab> {
                                   ),
                                 ),
                               ),
-                              minimumSize: MaterialStateProperty.resolveWith<Size>(
+                              minimumSize: WidgetStateProperty.resolveWith<Size>(
                                     (states) => const Size(double.infinity, 48.0),
                               ),
                             ),
