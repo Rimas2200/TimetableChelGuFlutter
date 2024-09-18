@@ -138,12 +138,10 @@ class _HeaderRowState extends State<HeaderRow> {
     '7': '18:20  19:50',
     '8': '19:55  21:25',
   };
-
   Future<void> initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
     setState(() {});
   }
-
   @override
   void initState() {
     super.initState();
@@ -169,8 +167,27 @@ class _HeaderRowState extends State<HeaderRow> {
     }
   }
 
+  int customSort(String a, String b) {
+    final timeRegex = RegExp(r'^\d{2}:\d{2} - \d{2}:\d{2}$');
+    bool isTimeFormat(String str) {
+      return timeRegex.hasMatch(str);
+    }
+    // Если оба pair_name — это время, сортируем по началу интервала
+    if (isTimeFormat(a) && isTimeFormat(b)) {
+      final aStartTime = a.split(' - ')[0];
+      final bStartTime = b.split(' - ')[0];
+      return aStartTime.compareTo(bStartTime);
+    }
+    // Если одно значение — время, а другое — число, сортируем числа перед временем
+    if (isTimeFormat(a)) return 1;
+    if (isTimeFormat(b)) return -1;
+    // Если оба значения — числа, сортируем по числовому значению
+    return int.parse(a).compareTo(int.parse(b));
+  }
+
   Map<String, List<Map<String, dynamic>>> _groupScheduleData(List<dynamic> data) {
     Map<String, List<Map<String, dynamic>>> grouped = {};
+
     for (var entry in data) {
       String pairName = entry['pair_name'];
       if (!grouped.containsKey(pairName)) {
@@ -178,7 +195,7 @@ class _HeaderRowState extends State<HeaderRow> {
       }
       grouped[pairName]!.add(entry);
     }
-    var sortedKeys = grouped.keys.toList()..sort();
+    var sortedKeys = grouped.keys.toList()..sort(customSort);
     Map<String, List<Map<String, dynamic>>> sortedGrouped = {};
     for (var key in sortedKeys) {
       sortedGrouped[key] = grouped[key]!;
@@ -186,12 +203,17 @@ class _HeaderRowState extends State<HeaderRow> {
     return sortedGrouped;
   }
 
+
   @override
   Widget build(BuildContext context) {
     if (prefs == null) {
       return const SizedBox();
     }
+    double screenWidth = MediaQuery.of(context).size.width;
+    double baseFontSize = screenWidth * 0.04;
+
     var pairKeys = groupedSchedule.keys.toList();
+
     return Expanded(
       flex: 9,
       child: SingleChildScrollView(
@@ -208,14 +230,14 @@ class _HeaderRowState extends State<HeaderRow> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 18.0, left: 18.0, right: 18.0),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 18.0, left: 18.0, right: 18.0),
                       child: Text(
                         'Время',
                         style: TextStyle(
                           color: Colors.black38,
                           fontWeight: FontWeight.bold,
-                          fontSize: 20.0,
+                          fontSize: baseFontSize, // Адаптивный размер шрифта
                         ),
                       ),
                     ),
@@ -225,7 +247,12 @@ class _HeaderRowState extends State<HeaderRow> {
                       itemCount: pairKeys.length,
                       itemBuilder: (context, index) {
                         var pairKey = pairKeys[index];
-                        String? pairTime = pairTimeMap[pairKey];
+                        String? pairTime;
+                        if (pairTimeMap.containsKey(pairKey)) {
+                          pairTime = pairTimeMap[pairKey];
+                        } else {
+                          pairTime = pairKey;
+                        }
                         return Container(
                           height: 140,
                           margin: const EdgeInsets.only(bottom: 16.0, left: 8.0, right: 8.0),
@@ -239,23 +266,47 @@ class _HeaderRowState extends State<HeaderRow> {
                               RichText(
                                 text: TextSpan(
                                   children: [
-                                    TextSpan(
-                                      text: pairTime?.split(' ')[0] ?? '',
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 26,
-                                      ),
-                                    ),
-                                    const TextSpan(text: ' '),
-                                    TextSpan(
-                                      text: pairTime?.split(' ')[2] ?? '',
-                                      style: const TextStyle(
-                                        color: Colors.black38,
-                                        fontWeight: FontWeight.w200,
-                                        fontSize: 26,
-                                      ),
-                                    ),
+                                    if (pairTime != null && pairTime.contains(' - '))
+                                      ...[
+                                        TextSpan(
+                                          text: pairTime.split(' - ')[0], // Время начала
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: baseFontSize * 1.5, // Адаптивный размер
+                                          ),
+                                        ),
+                                        const TextSpan(text: ' '),
+                                        TextSpan(
+                                          text: pairTime.split(' - ')[1], // Время окончания
+                                          style: TextStyle(
+                                            color: Colors.black38,
+                                            fontWeight: FontWeight.w200,
+                                            fontSize: baseFontSize * 1.5, // Адаптивный размер
+                                          ),
+                                        ),
+                                      ]
+                                    else if (pairTime != null)
+                                    // Если это время из pairTimeMap
+                                      ...[
+                                        TextSpan(
+                                          text: pairTime.split(' ')[0], // Время начала
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: baseFontSize * 1.5, // Адаптивный размер
+                                          ),
+                                        ),
+                                        const TextSpan(text: ' '),
+                                        TextSpan(
+                                          text: pairTime.split(' ')[2], // Время окончания
+                                          style: TextStyle(
+                                            color: Colors.black38,
+                                            fontWeight: FontWeight.w200,
+                                            fontSize: baseFontSize * 1.5, // Адаптивный размер
+                                          ),
+                                        ),
+                                      ],
                                   ],
                                 ),
                               ),
@@ -264,6 +315,7 @@ class _HeaderRowState extends State<HeaderRow> {
                         );
                       },
                     ),
+
                   ],
                 ),
               ),
@@ -273,14 +325,14 @@ class _HeaderRowState extends State<HeaderRow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 18.0, left: 18.0, right: 18.0),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 18.0, left: 18.0, right: 18.0),
                     child: Text(
                       'Расписание',
                       style: TextStyle(
                         color: Colors.black38,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20.0,
+                        fontSize: baseFontSize, // Адаптивный размер шрифта
                       ),
                     ),
                   ),
@@ -319,10 +371,10 @@ class _HeaderRowState extends State<HeaderRow> {
                             children: [
                               Text(
                                 '${entries.first['discipline']}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
-                                  fontSize: 18,
+                                  fontSize: baseFontSize, // Адаптивный размер шрифта
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -335,10 +387,12 @@ class _HeaderRowState extends State<HeaderRow> {
                                 icon: const Icon(Icons.location_on_sharp, size: 28, color: Colors.white),
                                 label: Text(
                                   'Аудитория: ${entries.first['classroom']}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
+                                  style: TextStyle(
+                                    fontSize: baseFontSize, // Адаптивный размер шрифта
                                     color: Colors.white,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               OutlinedButton.icon(
@@ -348,11 +402,13 @@ class _HeaderRowState extends State<HeaderRow> {
                                 ),
                                 icon: const Icon(Icons.school, size: 26, color: Colors.white),
                                 label: Text(
-                                  'Группы: ${entries.map((e) => e['group_name']).join(', ')}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
+                                  'Группы: $groupNames',
+                                  style: TextStyle(
+                                    fontSize: baseFontSize, // Адаптивный размер шрифта
                                     color: Colors.white,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -370,7 +426,6 @@ class _HeaderRowState extends State<HeaderRow> {
     );
   }
 }
-
 
 // ignore: must_be_immutable
 class FullScheduleScreen extends StatelessWidget {
@@ -400,6 +455,13 @@ class FullScheduleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String? displayTime;
+    if (pairTimeMap.containsKey(pairName)) {
+      displayTime = pairTimeMap[pairName];
+    } else {
+      displayTime = pairName;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Расписание'),
@@ -439,45 +501,44 @@ class FullScheduleScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16.0),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.school, color: Colors.deepPurple, size: 28),
-            const SizedBox(width: 8.0),
-            const Text(
-              'Группы: ',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(width: 8.0),
-            Expanded(
-              child: Row(
-                children: teacherNames
-                    .map((name) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.black87,
-                    ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.school, color: Colors.deepPurple, size: 28),
+                const SizedBox(width: 8.0),
+                const Text(
+                  'Группы: ',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black87,
                   ),
-                ))
-                    .toList(),
-              ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Row(
+                    children: teacherNames
+                        .map((name) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ))
+                        .toList(),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-
-        const SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             Row(
               children: [
                 const Icon(Icons.access_time, color: Colors.deepPurple, size: 28),
                 const SizedBox(width: 8.0),
                 Text(
-                  'Время: ${pairTimeMap[pairName]}',
+                  'Время: $displayTime',
                   style: const TextStyle(
                     fontSize: 18,
                     color: Colors.black87,
@@ -491,6 +552,7 @@ class FullScheduleScreen extends StatelessWidget {
     );
   }
 }
+
 
 class CalendarTab extends StatefulWidget {
   final Function(DateTime date, String weekday) onDateSelected;
@@ -589,7 +651,7 @@ class CustomContainer extends StatelessWidget {
         double paddingValue = constraints.maxWidth * 0.08;
         double fontSizeDate = constraints.maxWidth * 0.17;
         double fontSizeWeekType = constraints.maxWidth * 0.17;
-        double fontSizeWeekday = constraints.maxWidth * 0.065;
+        double fontSizeWeekday = constraints.maxWidth * 0.06;
         double fontSizeMonthYear = constraints.maxWidth * 0.035;
 
         return Container(

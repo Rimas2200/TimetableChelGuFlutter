@@ -162,6 +162,7 @@ class _HeaderRowState extends State<HeaderRow> {
       });
     }
   }
+
   Map<String, String> pairTimeMap = {
     '1': '8:00  9:30',
     '2': '9:40  11:10',
@@ -172,13 +173,35 @@ class _HeaderRowState extends State<HeaderRow> {
     '7': '18:20  19:50',
     '8': '19:55  21:25',
   };
+
   void _sortScheduleData() {
     scheduleData.sort((a, b) {
-      int pairA = int.parse(a['pair_name']);
-      int pairB = int.parse(b['pair_name']);
-      return pairA.compareTo(pairB);
+      String pairA = a['pair_name'];
+      String pairB = b['pair_name'];
+
+      // Проверяем, содержит ли строка время или цифры
+      bool isTimeA = pairA.contains(':');
+      bool isTimeB = pairB.contains(':');
+
+      // Если обе строки содержат цифры, сравниваем как числа
+      if (!isTimeA && !isTimeB) {
+        return int.parse(pairA).compareTo(int.parse(pairB));
+      }
+
+      // Если одна из строк содержит время, другая цифры, сравниваем так, чтобы цифры были первыми
+      if (!isTimeA && isTimeB) return -1;
+      if (isTimeA && !isTimeB) return 1;
+
+      // Если обе строки содержат время, сравниваем по времени
+      String timeA = pairA.split(' - ')[0];
+      String timeB = pairB.split(' - ')[0];
+      DateTime dateTimeA = DateFormat('HH:mm').parse(timeA);
+      DateTime dateTimeB = DateFormat('HH:mm').parse(timeB);
+
+      return dateTimeA.compareTo(dateTimeB);
     });
   }
+
 
   Future<void> initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
@@ -190,6 +213,16 @@ class _HeaderRowState extends State<HeaderRow> {
     if (prefs == null) {
       return const SizedBox();
     }
+
+    // Получаем ширину экрана для адаптивности
+    double screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+    // Вычисляем размер шрифта в зависимости от ширины экрана
+    double baseFontSize = screenWidth * 0.04; // Пример коэффициента
+
     return Expanded(
       flex: 9,
       child: SingleChildScrollView(
@@ -201,14 +234,15 @@ class _HeaderRowState extends State<HeaderRow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 18.0, left: 18.0, right: 18.0),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: 18.0, left: 18.0, right: 18.0),
                     child: Text(
                       'Время',
                       style: TextStyle(
                         color: Colors.black38,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20.0,
+                        fontSize: baseFontSize, // Адаптивный размер шрифта
                       ),
                     ),
                   ),
@@ -218,10 +252,19 @@ class _HeaderRowState extends State<HeaderRow> {
                     itemCount: scheduleData.length,
                     itemBuilder: (context, index) {
                       var entry = scheduleData[index];
-                      String? pairTime = pairTimeMap[entry['pair_name']];
+                      String pairName = entry['pair_name'];
+
+                      // Если в паре есть временной интервал, извлекаем его
+                      String? pairTime;
+                      if (pairName.contains(':')) {
+                        pairTime = pairName;
+                      } else {
+                        pairTime = pairTimeMap[pairName]; // Если только цифра, получаем время из словаря
+                      }
                       return Container(
                         height: 140,
-                        margin: const EdgeInsets.only(bottom: 16.0, left: 8.0, right: 8.0),
+                        margin: const EdgeInsets.only(
+                            bottom: 16.0, left: 8.0, right: 8.0),
                         padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.0),
@@ -234,19 +277,21 @@ class _HeaderRowState extends State<HeaderRow> {
                                 children: [
                                   TextSpan(
                                     text: pairTime?.split(' ')[0] ?? '',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Colors.black,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 26,
+                                      fontSize: baseFontSize *
+                                          1.5, // Адаптивный размер
                                     ),
                                   ),
                                   const TextSpan(text: ' '),
                                   TextSpan(
                                     text: pairTime?.split(' ')[2] ?? '',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Colors.black38,
                                       fontWeight: FontWeight.w200,
-                                      fontSize: 26,
+                                      fontSize: baseFontSize *
+                                          1.5, // Адаптивный размер
                                     ),
                                   ),
                                 ],
@@ -265,14 +310,15 @@ class _HeaderRowState extends State<HeaderRow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 18.0, left: 18.0, right: 18.0),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: 18.0, left: 18.0, right: 18.0),
                     child: Text(
                       'Расписание',
                       style: TextStyle(
                         color: Colors.black38,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20.0,
+                        fontSize: baseFontSize, // Адаптивный размер
                       ),
                     ),
                   ),
@@ -287,74 +333,83 @@ class _HeaderRowState extends State<HeaderRow> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => FullScheduleScreen(
-                                discipline: entry['discipline'],
-                                classroom: entry['classroom'],
-                                teacherName: entry['teacher_name'],
-                                pairName: entry['pair_name'],
-                              ),
+                              builder: (context) =>
+                                  FullScheduleScreen(
+                                    discipline: entry['discipline'],
+                                    classroom: entry['classroom'],
+                                    teacherName: entry['teacher_name'],
+                                    pairName: entry['pair_name'],
+                                  ),
                             ),
                           );
                         },
-                    child: Container(
-                      height: 140,
-                      margin: const EdgeInsets.only(bottom: 16.0, left: 0.0, right: 8.0),
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        color: const Color(0xFF6226A6),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${entry['discipline']}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 18,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        child: Container(
+                          height: 140,
+                          margin: const EdgeInsets.only(
+                              bottom: 16.0, left: 0.0, right: 8.0),
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            color: const Color(0xFF6226A6),
                           ),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            style: ButtonStyle(
-                              side: WidgetStateProperty.all(BorderSide.none),
-                            ),
-                            icon: const Icon(Icons.location_on_sharp, size: 28, color: Colors.white),
-                            label: Text(
-                              'Аудитория: ${entry['classroom']}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${entry['discipline']}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: baseFontSize *
+                                      1.0, // Адаптивный размер
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            style: ButtonStyle(
-                              side: WidgetStateProperty.all(BorderSide.none),
-                            ),
-                            icon: const Icon(Icons.school, size: 26, color: Colors.white),
-                            label: Text(
-                              '${entry['teacher_name']}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
+                              OutlinedButton.icon(
+                                onPressed: () {},
+                                style: ButtonStyle(
+                                  side: WidgetStateProperty.all(
+                                      BorderSide.none),
+                                ),
+                                icon: const Icon(
+                                    Icons.location_on_sharp, size: 28,
+                                    color: Colors.white),
+                                label: Text(
+                                  'Аудитория: ${entry['classroom']}',
+                                  style: TextStyle(
+                                    fontSize: baseFontSize,
+                                    // Адаптивный размер
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
-                            ),
+                              OutlinedButton.icon(
+                                onPressed: () {},
+                                style: ButtonStyle(
+                                  side: WidgetStateProperty.all(
+                                      BorderSide.none),
+                                ),
+                                icon: const Icon(Icons.school, size: 26,
+                                    color: Colors.white),
+                                label: Text(
+                                  '${entry['teacher_name']}',
+                                  style: TextStyle(
+                                    fontSize: baseFontSize, // Адаптивный размер
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-           ),
-          ),
-         ],
+            ),
+          ],
         ),
       ),
     );
@@ -368,6 +423,7 @@ class FullScheduleScreen extends StatelessWidget {
   final String classroom;
   final String teacherName;
   final String pairName;
+
   Map<String, String> pairTimeMap = {
     '1': 'С 8:00 по 9:30',
     '2': 'С 9:40 по 11:10',
@@ -378,90 +434,118 @@ class FullScheduleScreen extends StatelessWidget {
     '7': 'С 18:20 по 19:50',
     '8': 'С 19:55 по 21:25',
   };
-  FullScheduleScreen({super.key,
+
+  FullScheduleScreen({
+    super.key,
     required this.discipline,
     required this.classroom,
     required this.teacherName,
     required this.pairName,
   });
 
+  String formatPairTime(String pairName) {
+    if (pairName.contains(':')) {
+      // Если в паре есть временной интервал, форматируем его
+      List<String> times = pairName.split(' - ');
+      return 'с ${times[0]} до ${times[1]}';
+    } else {
+      // Если это просто номер пары, возвращаем значение из pairTimeMap
+      return pairTimeMap[pairName] ?? 'Время не указано';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Используем новую функцию для получения отформатированного времени
+    String pairTime = formatPairTime(pairName);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Расписание'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                discipline,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start, // Контроль вертикального выравнивания
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                const Icon(Icons.location_on, color: Colors.deepPurple, size: 28),
+                const SizedBox(width: 8.0),
+                Expanded(
                   child: Text(
-                    discipline,
+                    'Аудитория: $classroom',
                     style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      fontSize: 18,
+                      color: Colors.black87,
                     ),
+                    maxLines: 2, // Ограничение на количество строк
+                    overflow: TextOverflow.visible, // Перенос текста
                   ),
-                ),
-                const SizedBox(height: 16.0),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.deepPurple, size: 28),
-                    const SizedBox(width: 8.0),
-                    Text(
-                      'Аудитория: $classroom',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0),
-                Row(
-                  children: [
-                    const Icon(Icons.school, color: Colors.deepPurple, size: 28),
-                    const SizedBox(width: 8.0),
-                    Text(
-                      'Преподаватель: $teacherName',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, color: Colors.deepPurple, size: 28),
-                    const SizedBox(width: 8.0),
-                    Text(
-                      'Время: ${pairTimeMap[pairName]}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
-          )
+            const SizedBox(height: 16.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.school, color: Colors.deepPurple, size: 28),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    'Преподаватель: $teacherName',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2, // Ограничение на количество строк
+                    overflow: TextOverflow.visible, // Перенос текста
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            Row(
+              children: [
+                const Icon(Icons.access_time, color: Colors.deepPurple, size: 28),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    'Время: $pairTime',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
 
 class CalendarTab extends StatefulWidget {
   final Function(DateTime date, String weekday) onDateSelected;
@@ -560,7 +644,7 @@ class CustomContainer extends StatelessWidget {
         double paddingValue = constraints.maxWidth * 0.08;
         double fontSizeDate = constraints.maxWidth * 0.17;
         double fontSizeWeekType = constraints.maxWidth * 0.17;
-        double fontSizeWeekday = constraints.maxWidth * 0.065;
+        double fontSizeWeekday = constraints.maxWidth * 0.06;
         double fontSizeMonthYear = constraints.maxWidth * 0.035;
 
         return Container(

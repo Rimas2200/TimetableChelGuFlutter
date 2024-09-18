@@ -296,7 +296,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         Text(
                           _username ?? '',
                           style: const TextStyle(
-                            fontSize: 28,
+                            fontSize: 22,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
                           ),
@@ -336,7 +336,7 @@ class _ProfileTabState extends State<ProfileTab> {
                               });
                             },
                             style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                              backgroundColor: WidgetStateProperty.resolveWith<Color>(
                                     (states) => _selectedRole == 'Студент' ? Colors.white : Colors.white,
                               ),
                               foregroundColor: WidgetStateProperty.resolveWith<Color>(
@@ -508,7 +508,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         items: _departments.map((String department) {
                           return DropdownMenuItem<String>(
                             value: department,
-                            child: Text(truncateDepartmentName(department, 54)),
+                            child: Text(truncateDepartmentName(department, 52)),
                           );
                         }).toList(),
                         onChanged: (value) {
